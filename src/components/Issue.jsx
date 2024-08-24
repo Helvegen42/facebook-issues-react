@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Issuedot from "../assets/Issuedot.jsx";
 import Checkmark from "../assets/Checkmark.jsx";
 // import SelectMenuHeader from "./SelectMenuHeader.jsx";
@@ -6,18 +6,21 @@ import "@radix-ui/themes/styles.css";
 import { Flex, Badge } from "@radix-ui/themes";
 import { formatDistanceToNow } from "date-fns";
 import Dropdown from "../assets/Dropdown.jsx";
-
 import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchIssues } from "../store/counterSlice.js";
 
 const Issue = () => {
-  const [issue, setIssue] = useState([]);
+  const dispatch = useDispatch();
+  const issues = useSelector((state) => state.issues.issues);
 
   useEffect(() => {
-    fetch("https://api.github.com/repos/facebook/react/issues")
-      .then((response) => response.json())
-      .then((issue) => setIssue(issue))
-      .catch((error) => console.error("Error:", error));
-  }, []);
+    // fetch("https://api.github.com/repos/facebook/react/issues")
+    //   .then((response) => response.json())
+    //   .then((issue) => setIssue(issue))
+    //   .catch((error) => console.error("Error:", error));
+    dispatch(fetchIssues());
+  }, [dispatch]);
 
   return (
     <>
@@ -64,7 +67,7 @@ const Issue = () => {
             </div>
           </div>
         </div>
-        {issue.map((issue) => (
+        {issues.map((issue) => (
           <li
             key={issue.id}
             className='flex justify-between gap-x-6  bg-[rgb(10,12,16)]

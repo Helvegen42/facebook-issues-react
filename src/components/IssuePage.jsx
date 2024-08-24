@@ -1,5 +1,5 @@
 import { Badge, Flex, Avatar } from "@radix-ui/themes";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Issuedot from "../assets/Issuedot";
 import { formatDistanceToNow } from "date-fns";
@@ -8,29 +8,24 @@ import ReactMarkdown from "react-markdown";
 import EmojisMenu from "../assets/EmojisMenu";
 import Events from "./Events";
 import Comments from "./Comments";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchIssue, fetchTimeline } from "../store/counterSlice";
 
 const IssuePage = () => {
-  const [issueItem, setIssueItem] = useState({});
-  const [eventItem, setEvent] = useState([]);
+  const dispatch = useDispatch();
   const { number } = useParams();
+  const issue = useSelector((state) => state.issues.issue);
+  const timeline = useSelector((state) => state.issues.timeline);
 
   useEffect(() => {
-    fetch(`https://api.github.com/repos/facebook/react/issues/${number}`)
-      .then((response) => response.json())
-      .then((issueItem) => setIssueItem(issueItem))
-      .catch((error) => console.error("Error:", error));
-  }, [number]);
+    dispatch(fetchIssue({ number }));
+  }, [number, dispatch]);
 
   useEffect(() => {
-    fetch(
-      `https://api.github.com/repos/facebook/react/issues/${number}/timeline`
-    )
-      .then((response) => response.json())
-      .then((eventItem) => setEvent(eventItem))
-      .catch((error) => console.error("Error:", error));
-  }, [number]);
+    dispatch(fetchTimeline({ number }));
+  }, [number, dispatch]);
 
-  if (Object.keys(issueItem).length === 0)
+  if (Object.keys(issue).length === 0)
     return <div className=''>Something went wrong with fetch...</div>;
 
   return (
@@ -38,8 +33,7 @@ const IssuePage = () => {
       <div className='mainContainer h-full w-[1216px]'>
         <div className='mb-3'>
           <h1 className='flex-auto mb-2 mr-0 whitespace-break-spaces text-[32px] text-[#FBFCFD]'>
-            {issueItem.title}{" "}
-            <span className='font-thin'>#{issueItem.number}</span>
+            {issue.title} <span className='font-thin'>#{issue.number}</span>
           </h1>
           <div className='flex gap-1 justify-center items-center mb-4 pb-2 border-1 border-b border-[#7a828e]'>
             <Flex className='mb-2'>
@@ -51,17 +45,17 @@ const IssuePage = () => {
             </Flex>
             <div className='flex-auto text-[#F0F3F6] mb-2 '>
               <a className='font-medium items-center justify-center'>
-                {issueItem?.user.login}
+                {issue?.user.login}
               </a>{" "}
               {`opened this issue ${formatDistanceToNow(
-                new Date(issueItem.created_at),
+                new Date(issue.created_at),
                 {
                   addSuffix: true,
                 }
               )} · ${
-                issueItem.comments === 1
-                  ? `${issueItem.comments} comment`
-                  : `${issueItem.comments} comments`
+                issue.comments === 1
+                  ? `${issue.comments} comment`
+                  : `${issue.comments} comments`
               } `}
             </div>
           </div>
@@ -72,7 +66,7 @@ const IssuePage = () => {
                   <Flex gap='2'>
                     <Avatar
                       className='border border-[#ffffffe6]'
-                      src={`${issueItem.user.avatar_url}`}
+                      src={`${issue.user.avatar_url}`}
                       fallback='A'
                       radius='full'
                     />
@@ -83,11 +77,9 @@ const IssuePage = () => {
                   >
                     <div className='flex  text-[#f0f3f6] text-[14px] bg-[#272b33]  w-[838px] h-[36.98px] justify-between items-center px-4'>
                       <div className='flex'>
-                        <a className=' font-medium mr-1'>
-                          {issueItem.user.login}
-                        </a>
+                        <a className=' font-medium mr-1'>{issue.user.login}</a>
                         {` commented
-                  ${formatDistanceToNow(new Date(issueItem.created_at), {
+                  ${formatDistanceToNow(new Date(issue.created_at), {
                     addSuffix: true,
                   })}`}
                       </div>
@@ -99,7 +91,7 @@ const IssuePage = () => {
                       <div className='edit-comment-hide flex-row p-4  w-full'>
                         <div className='issue-body  flex  text-[14px] text-[#f0f3f6] w-full'>
                           <ReactMarkdown className='prose-p:mb-4 prose-p:mt-0 w-full'>
-                            {issueItem.body}
+                            {issue.body}
                           </ReactMarkdown>
                         </div>
                         <div className='reaction flex flex-auto '>
@@ -111,7 +103,7 @@ const IssuePage = () => {
                 </div>
                 <div>
                   <ul>
-                    {eventItem.map((eventItem) => (
+                    {timeline.map((eventItem) => (
                       <li key={eventItem.id}>
                         {eventItem.event === "commented" ? (
                           <Comments eventItem={eventItem} />
